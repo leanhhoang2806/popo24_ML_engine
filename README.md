@@ -13,6 +13,7 @@ connect to another computer:
 
 `sudo docker build -t my-python-app . && sudo docker run --gpus all -it --rm my-python-app`
 
+`sudo docker system prune`
 
 command line to track resources `htop` + `nvtop`
 
@@ -66,3 +67,12 @@ sudo systemctl restart docker
 ```
 5. Test the installation: If you see the tensor, it's working
 `docker run --gpus all -it --rm tensorflow/tensorflow:latest-gpu python -c "import tensorflow as tf; print(tf.reduce_sum(tf.random.normal([1000, 1000])))"`
+
+
+
+6. For distributed training
+Head node
+`sudo docker stop worker-0 | true && sudo docker rm worker-0 | true && sudo docker rmi --force my_tensorflow_app && sudo docker build -t my_tensorflow_app . && sudo docker run --gpus all -p 2222:2222 -e TF_CONFIG='{"cluster": {"worker": ["192.168.1.101:2222", "192.168.1.102:2222"]}, "task": {"type": "worker", "index": 0}}' --name worker-0  my_tensorflow_app`
+
+Worker Node
+`sudo docker stop worker-0 | true && sudo docker rm worker-0 | true && sudo docker rmi --force my_tensorflow_app && sudo docker build -t my_tensorflow_app . && sudo docker run --gpus all -p 2222:2222 -e TF_CONFIG='{"cluster": {"worker": ["192.168.1.101:2222", "192.168.1.102:2222"]}, "task": {"type": "worker", "index": 1}}' --name worker-0  my_tensorflow_app`
