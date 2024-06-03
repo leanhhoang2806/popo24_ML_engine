@@ -66,36 +66,32 @@ def main():
         # Gradient accumulation
         accumulate_gradients_every = 4  # Accumulate gradients over 4 batches
 
+        def distributed_train_step(x_batch, y_batch):
+            with tf.GradientTape() as tape:
+                logits = model(x_batch, training=True).logits
+                per_example_loss = loss_fn(y_batch, logits)
+                loss = tf.nn.compute_average_loss(per_example_loss, global_batch_size=global_batch_size)
+            gradients = tape.gradient(loss, model.trainable_variables)
+            optimizer.apply_gradients(zip(gradients, model.trainable_variables))
+            return loss
+
         for tokens_chunk in token_chunks:
             dataset = create_dataset(tokens_chunk)
+            dist_dataset = strategy.experimental_distribute_dataset(dataset)
             steps_per_epoch = len(tokens_chunk) // 128 // global_batch_size
             total_steps = 1 * steps_per_epoch
             progress_bar = tqdm(total=total_steps, desc="Training Progress")
 
             for epoch in range(1):
                 print(f"Epoch {epoch}")
-                accumulated_loss = 0
-                accumulated_gradients = [tf.zeros_like(var) for var in model.trainable_variables]
 
-                for step, (x_batch, y_batch) in enumerate(dataset):
-                    with tf.GradientTape() as tape:
-                        logits = model(x_batch, training=True).logits
-                        per_example_loss = loss_fn(y_batch, logits)
-                        loss = tf.nn.compute_average_loss(per_example_loss, global_batch_size=global_batch_size)
+                for step, (x_batch, y_batch) in enumerate(dist_dataset):
+                    distributed_loss = strategy.run(distributed_train_step, args=(x_batch, y_batch))
 
-                    accumulated_loss += loss
+                    if step % 100 == 0:
+                        progress_bar.set_postfix(loss=tf.reduce_mean(distributed_loss).numpy())
 
-                    if (step + 1) % accumulate_gradients_every == 0 or step + 1 == steps_per_epoch:
-                        gradients = tape.gradient(accumulated_loss, model.trainable_variables)
-                        if gradients:  # Check if gradients are not None
-                            accumulated_gradients = [tf.zeros_like(var) if grad is None else acc_grad + grad for acc_grad, grad, var in zip(accumulated_gradients, gradients, model.trainable_variables)]
-                            accumulated_loss /= accumulate_gradients_every
-
-                            optimizer.apply_gradients(zip(accumulated_gradients, model.trainable_variables))
-
-                            progress_bar.update(1)
-                            if step % 100 == 0:
-                                progress_bar.set_postfix(loss=accumulated_loss.numpy())
+                    progress_bar.update(1)
 
                 progress_bar.close()
 
