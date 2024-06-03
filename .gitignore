@@ -2,5 +2,3 @@ myenv/
 models/
 results/
 checkpoint/
-data/
-__pycache__

@@ -74,5 +74,9 @@ sudo systemctl restart docker
 Head node
 `sudo docker stop worker-0 | true && sudo docker rm worker-0 | true && sudo docker rmi --force my_tensorflow_app && sudo docker build -t my_tensorflow_app . && sudo docker run --gpus all -p 2222:2222 -e TF_CONFIG='{"cluster": {"worker": ["192.168.1.101:2222", "192.168.1.102:2222"]}, "task": {"type": "worker", "index": 0}}' --name worker-0  my_tensorflow_app`
 
+
+
 Worker Node
+`cd /home/hoang/Documents/work/popo24_ML_engine`
+
 `sudo docker stop worker-0 | true && sudo docker rm worker-0 | true && sudo docker rmi --force my_tensorflow_app && sudo docker build -t my_tensorflow_app . && sudo docker run --gpus all -p 2222:2222 -e TF_CONFIG='{"cluster": {"worker": ["192.168.1.101:2222", "192.168.1.102:2222"]}, "task": {"type": "worker", "index": 1}}' --name worker-0  my_tensorflow_app`
