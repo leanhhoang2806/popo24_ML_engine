@@ -56,7 +56,7 @@ def main():
         # Step 3: Fine-tune the GPT-2 Model
         model = TFGPT2LMHeadModel.from_pretrained('gpt2')
         optimizer = tf.keras.optimizers.Adam(learning_rate=3e-5)
-        loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
+        loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True, reduction=tf.keras.losses.Reduction.NONE)
 
         # Adjust batch size based on the number of workers
         global_batch_size = 2 * strategy.num_replicas_in_sync
@@ -80,7 +80,8 @@ def main():
                 for step, (x_batch, y_batch) in enumerate(dataset):
                     with tf.GradientTape() as tape:
                         logits = model(x_batch, training=True).logits
-                        loss = loss_fn(y_batch, logits)
+                        per_example_loss = loss_fn(y_batch, logits)
+                        loss = tf.nn.compute_average_loss(per_example_loss, global_batch_size=global_batch_size)
 
                     accumulated_loss += loss
 
