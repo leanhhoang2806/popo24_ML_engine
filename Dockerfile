@@ -20,4 +20,4 @@ COPY . .
 
 
 # Set the entry point to run main.py when the container starts
-CMD ["python", "-m", "generative_ai"]
+CMD ["python", "-m", "single_training"]

@@ -83,7 +83,6 @@ def main():
             progress_bar = tqdm(total=total_steps, desc="Training Progress")
 
             for epoch in range(1):
-                print(f"Epoch {epoch}")
 
                 for step, (x_batch, y_batch) in enumerate(dist_dataset):
                     distributed_loss = strategy.run(distributed_train_step, args=(x_batch, y_batch))
