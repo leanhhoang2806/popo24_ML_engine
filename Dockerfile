@@ -20,4 +20,6 @@ COPY . .
 
 
 # Set the entry point to run main.py when the container starts
-CMD ["python", "-m", "single_training"]
+# CMD ["python", "-m", "scale_ray_example"]
+# CMD ["python", "-m", "ray_test"]
+CMD ["python", "-m", "llama_example"]

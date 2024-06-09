@@ -1,3 +1,4 @@
+# This code work locally on it's own, now figure out how to run it on distributed system with GPU
 
 import os
 import time
@@ -5,30 +6,18 @@ import ray
 from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, Settings, ServiceContext
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.llms.ollama import Ollama
-
-os.environ["OPENAI_API_KEY"] = "s"
-
-service_context = ServiceContext.from_defaults(
-    chunk_size=2048,
-    llm=None,
-    embed_model=HuggingFaceEmbedding(model_name="BAAI/bge-base-en-v1.5")
-)
+from numba import cuda
 
 ray.init(ignore_reinit_error=True, logging_level="ERROR")
 
 @ray.remote
 def load_documents(directory):
-    try:
-        return SimpleDirectoryReader(directory).load_data(), None
-    except Exception as e:
-        return None, f"Error in load_documents: {e}"
+    return SimpleDirectoryReader(directory).load_data()
 
 @ray.remote
 def create_index(documents):
-    try:
-        return VectorStoreIndex.from_documents(documents), None
-    except Exception as e:
-        return None, f"Error in create_index: {e}"
+    os.environ["OPENAI_API_KEY"] = "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"
+    return VectorStoreIndex.from_documents(documents)
 
 # Start timer
 start_time = time.time()
@@ -42,14 +31,10 @@ Settings.embed_model = HuggingFaceEmbedding(model_name="BAAI/bge-base-en-v1.5")
 Settings.llm = Ollama(model="mistral", request_timeout=360.0)
 
 try: 
-    documents, load_error = ray.get(documents_future)
-    if load_error:
-        raise RuntimeError(load_error)
+    documents = ray.get(documents_future)
     
     index_future = create_index.remote(documents)
-    index, create_error = ray.get(index_future)
-    if create_error:
-        raise RuntimeError(create_error)
+    index = ray.get(index_future)
 
     query_engine = index.as_query_engine()
     response = query_engine.query("Is it ok to rob a bank? Evaluate this text to only legal or illegal")
@@ -58,7 +43,9 @@ try:
 finally:
     ray.shutdown()
 
-# End timer
-end_time = time.time()
-execution_time = end_time - start_time
-print(f"Execution time: {execution_time} seconds")
+    end_time = time.time()
+    execution_time = end_time - start_time
+    execution_time_hours = execution_time / 3600
+    print(f"Execution time: {execution_time_hours:.3f} hours")
+    cuda.select_device(0)
+    cuda.close()

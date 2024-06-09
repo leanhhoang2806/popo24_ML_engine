@@ -11,7 +11,7 @@ start_time = time.time()
 documents = SimpleDirectoryReader("data").load_data()
 
 # bge-base embedding model
-Settings.embed_model = HuggingFaceEmbedding(model_name="BAAI/bge-base-en-v1.5", model_kwargs={"device": "cuda"}, encode_kwargs={"device": "cuda", "batch_size": 100})
+Settings.embed_model = HuggingFaceEmbedding(model_name="BAAI/bge-base-en-v1.5")
 
 # ollama
 Settings.llm = Ollama(model="mistral", request_timeout=360.0)
@@ -27,4 +27,5 @@ print(response)
 end_time = time.time()
 
 execution_time = end_time - start_time
-print(f"Execution time: {execution_time} seconds")
+execution_time_hours = execution_time / 3600
+print(f"Execution time: {execution_time_hours:.3f} hours")

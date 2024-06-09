@@ -5,13 +5,16 @@
 5. If models proven successful, scrape data from the web
 
 
+# Run a script with ray
+`python distributed_training_for_lama.py`
+
 # Env set up
 connect to another computer:
 `ssh hoang@192.168.1.102` => password 2910
 `cd ~/home/hoang/Documents/work/ray-worker-node`
 `source myenv/bin/activate`
 
-`sudo docker build -t my-python-app . && sudo docker run --gpus all -it --rm my-python-app`
+`sudo docker build -t my-python-app . && sudo docker run --shm-size=4.98gb --gpus all -it --rm -p 8265:8265 my-python-app`
 
 `sudo docker system prune`
 
