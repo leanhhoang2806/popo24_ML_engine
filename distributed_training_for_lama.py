@@ -17,12 +17,14 @@ def load_documents(directory):
     return SimpleDirectoryReader(directory).load_data()
 
 @ray.remote(num_gpus=1)
-def create_index(documents, ray_llm, ray_embed_model):
-    Settings.embed_model = ray_embed_model
-    Settings.llm = ray_llm
-    print("Settings after assignment:")
-    print(Settings.__dict__)
+def create_index(documents):
+    from llama_index.core import VectorStoreIndex, Settings
     
+    # bge-base embedding model
+    Settings.embed_model = HuggingFaceEmbedding(model_name="BAAI/bge-base-en-v1.5")
+
+    # ollama
+    Settings.llm = Ollama(model="mistral", request_timeout=360.0)
     try:
         index = VectorStoreIndex.from_documents(documents)
     except Exception as e:
@@ -32,11 +34,8 @@ def create_index(documents, ray_llm, ray_embed_model):
     return index
 
 @ray.remote
-def run_all():
+def run_all(documents):
     from llama_index.core import Settings
-    start_time = time.time()
-
-    documents = SimpleDirectoryReader("data").load_data()
 
     # bge-base embedding model
     Settings.embed_model = HuggingFaceEmbedding(model_name="BAAI/bge-base-en-v1.5")
@@ -64,8 +63,13 @@ start_time = time.time()
 documents_future = load_documents.remote("data")
 
 try:
-    run_all_future = run_all.remote()
+
+    start_time = time.time()
+
+    documents = SimpleDirectoryReader("data").load_data()
+    run_all_future = run_all.remote(documents)
     ray.get(run_all_future)
+
 
 finally:
     ray.shutdown()
