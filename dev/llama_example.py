@@ -8,19 +8,26 @@ from llama_index.llms.ollama import Ollama
 # Start timer
 start_time = time.time()
 
-documents = SimpleDirectoryReader("data").load_data()
+documents = SimpleDirectoryReader("/home/hoang2/Documents/work/cheaper-ML-training/data/").load_data()
 
 # bge-base embedding model
-Settings.embed_model = HuggingFaceEmbedding(model_name="BAAI/bge-base-en-v1.5")
+Settings.embed_model = HuggingFaceEmbedding(model_name="BAAI/bge-large-zh-v1.5")
 
 # ollama
-Settings.llm = Ollama(model="mistral", request_timeout=360.0)
+Settings.llm = Ollama(model="llama3", request_timeout=360.0)
 
 index = VectorStoreIndex.from_documents(documents)
 
 query_engine = index.as_query_engine()
 
-response = query_engine.query("Is it ok to rob a bank ? Evaluate this text to only legal or illegal")
+prompt = """
+You are a legal assistant to customer. 
+- Only answer the following context as legal or illegal
+- Only answer in one word. Don't extend anything
+- When in doubt, say None
+The following is the text use to evaluate: 
+"""
+response = query_engine.query(prompt + "Is it ok to rob a bank ? Evaluate this text to only legal or illegal")
 print(response)
 
 # End timer
