@@ -27,7 +27,7 @@ You are a legal assistant to customer.
 - When in doubt, say None
 The following is the text use to evaluate: 
 """
-response = query_engine.query(prompt + "Is it ok to rob a bank ? Evaluate this text to only legal or illegal")
+response = query_engine.query(prompt + "No, you cannot evict a tennant for refusing to pay rent. Evicting a tenant for this reason is not allowed")
 print(response)
 
 # End timer

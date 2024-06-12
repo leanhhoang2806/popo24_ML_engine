@@ -1,3 +1,9 @@
+
+
+# Run this code with
+# `python distributed_training_for_lama.py`
+
+
 import os
 import time
 import ray

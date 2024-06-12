@@ -25,3 +25,6 @@ class Cat(Animal):
 def talk_animal(animal: Animal) -> str:
     return animal.speak()
 
+
+
+# Reviewing list for leetcode
